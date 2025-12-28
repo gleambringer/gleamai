@@ -1,13 +1,17 @@
 {
-  "name": "devour-ai",
+  "name": "gleam-ai-chatbot",
   "version": "1.0.0",
-  "description": "Multiplayer Eater Game with Autonomous AI",
+  "description": "Secure backend for GleamAI Chatbot",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
     "express": "^4.18.2",
-    "socket.io": "^4.7.2"
+    "node-fetch": "^2.6.7",
+    "dotenv": "^16.3.1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }
