@@ -1,1 +1,206 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GleamAI | Sentient Interface</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Fira+Code&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0a050f;
+            --bg-violet: #1a0b2e;
+            --theme-accent: #9d174d;
+            --glass: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(157, 23, 77, 0.2);
+        }
+
+        body {
+            background: radial-gradient(circle at center, var(--bg-violet) 0%, var(--bg-dark) 100%);
+            color: white;
+            font-family: 'Inter', sans-serif;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .glass-panel {
+            background: var(--glass);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+        }
+
+        #chat-container {
+            scrollbar-width: thin;
+            scrollbar-color: var(--theme-accent) transparent;
+        }
+
+        #chat-container::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        #chat-container::-webkit-scrollbar-thumb {
+            background: var(--theme-accent);
+            border-radius: 10px;
+        }
+
+        .message-animate {
+            animation: slideUp 0.3s ease-out forwards;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .ai-glow {
+            box-shadow: 0 0 20px rgba(157, 23, 77, 0.2);
+        }
+
+        code {
+            font-family: 'Fira Code', monospace;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+
+        .typing-indicator span {
+            display: inline-block;
+            width: 4px;
+            height: 4px;
+            background: var(--theme-accent);
+            border-radius: 50%;
+            margin-right: 2px;
+            animation: bounce 1.4s infinite ease-in-out;
+        }
+
+        .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <header class="max-w-4xl mx-auto w-full flex justify-between items-center mb-6">
+        <div>
+            <h1 class="text-2xl font-black tracking-tighter lowercase">gleam<span class="text-pink-600">ai</span></h1>
+            <p class="text-[10px] uppercase tracking-[0.3em] opacity-40">Sentient Knowledge Interface</p>
+        </div>
+        <div class="flex items-center gap-2">
+            <div id="status-dot" class="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_#22c55e]"></div>
+            <span class="text-[10px] uppercase tracking-widest opacity-60">System Online</span>
+        </div>
+    </header>
+
+    <main class="max-w-4xl mx-auto w-full flex-1 flex flex-col glass-panel rounded-3xl overflow-hidden shadow-2xl relative">
+        <div class="absolute top-0 right-0 w-64 h-64 bg-pink-900/10 blur-[100px] pointer-events-none"></div>
+        <div class="absolute bottom-0 left-0 w-64 h-64 bg-violet-900/10 blur-[100px] pointer-events-none"></div>
+
+        <div id="chat-container" class="flex-1 overflow-y-auto p-6 space-y-6">
+            <div class="flex flex-col items-start message-animate">
+                <div class="glass-panel px-4 py-3 rounded-2xl rounded-tl-none max-w-[85%] ai-glow">
+                    <p class="text-sm leading-relaxed">Greetings. I am GleamAI. I've been initialized to assist your journey through the digital void. How may I illuminate your path today?</p>
+                </div>
+                <span class="text-[10px] uppercase tracking-widest opacity-30 mt-2 ml-1">GleamAI • System</span>
+            </div>
+        </div>
+
+        <div id="typing" class="hidden px-6 py-2">
+            <div class="typing-indicator flex items-center">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+
+        <div class="p-4 bg-black/20 border-t border-white/5">
+            <div class="relative flex items-center">
+                <input type="text" id="user-input" 
+                    class="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 pr-16 focus:outline-none focus:border-pink-600/50 transition-all text-sm placeholder:text-white/20"
+                    placeholder="Transmit a message...">
+                <button onclick="handleSubmit()" id="send-btn"
+                    class="absolute right-2 p-3 bg-pink-700 hover:bg-pink-600 rounded-xl transition-all shadow-lg active:scale-95">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+                </button>
+            </div>
+            <p class="text-[9px] text-center mt-3 opacity-20 uppercase tracking-[0.2em]">GleamAI Version 2.5 • Gemini Powered</p>
+        </div>
+    </main>
+
+    <script>
+        const chatContainer = document.getElementById('chat-container');
+        const userInput = document.getElementById('user-input');
+        const typingIndicator = document.getElementById('typing');
+
+        // Now calling our internal Node.js API instead of Google directly
+        async function fetchAIResponse(userMessage) {
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: userMessage })
+                });
+
+                if (!response.ok) throw new Error('API_ERROR');
+
+                const data = await response.json();
+                return data.text || "The transmission was lost in the void.";
+            } catch (error) {
+                return "Error: Connection to the Gleam core failed. Please verify your link.";
+            }
+        }
+
+        function appendMessage(text, role) {
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `flex flex-col ${role === 'user' ? 'items-end' : 'items-start'} message-animate`;
+            
+            const isAI = role === 'ai';
+            const innerContent = isAI ? formatText(text) : text;
+
+            msgDiv.innerHTML = `
+                <div class="${isAI ? 'glass-panel ai-glow rounded-tl-none' : 'bg-pink-800/40 rounded-tr-none'} px-4 py-3 rounded-2xl max-w-[85%]">
+                    <p class="text-sm leading-relaxed">${innerContent}</p>
+                </div>
+                <span class="text-[10px] uppercase tracking-widest opacity-30 mt-2 ${isAI ? 'ml-1' : 'mr-1'}">
+                    ${isAI ? 'GleamAI' : 'User'} • ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </span>
+            `;
+            
+            chatContainer.appendChild(msgDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function formatText(text) {
+            return text
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/`(.*?)`/g, '<code>$1</code>')
+                .replace(/\n/g, '<br>');
+        }
+
+        async function handleSubmit() {
+            const message = userInput.value.trim();
+            if (!message) return;
+
+            userInput.value = '';
+            appendMessage(message, 'user');
+            
+            typingIndicator.classList.remove('hidden');
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+
+            const aiResponse = await fetchAIResponse(message);
+            
+            typingIndicator.classList.add('hidden');
+            appendMessage(aiResponse, 'ai');
+        }
+
+        userInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') handleSubmit();
+        });
+    </script>
+</body>
+</html>
